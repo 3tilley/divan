@@ -267,8 +267,10 @@ impl TreePainter {
         .as_ref::<str>()
         .write(buf, &mut self.column_widths);
 
+        // println!("--This is buf--{buf}");
         println!("{buf}");
 
+        let mut counter_lines = 0;
         // Write counter stats.
         let counter_stats = serialized_counters.map(TreeColumnData);
         for counter_kind in KnownCounterKind::ALL {
@@ -300,6 +302,8 @@ impl TreePainter {
 
             counter_stats.write(buf, &mut self.column_widths);
             println!("{buf}");
+            // println!("--Counter buf --{buf}");
+            counter_lines += 1;
         }
 
         // Write allocation information.
@@ -336,25 +340,47 @@ impl TreePainter {
 
                 if !is_last {
                     buf.push('│');
+                    // Right-pad buffer.
+                    {
+                        let buf_len = buf.chars().count();
+                        let max_span = self.max_name_span;
+                        let pad_len = TREE_COL_BUF + self.max_name_span.saturating_sub(buf_len);
+                        buf.extend(repeat(' ').take(pad_len));
+
+                        if buf_len > max_span {
+                            self.max_name_span = buf_len;
+                        }
+                    };
+
+                    TreeColumnData::from_fn(|column| value[column as usize].as_str())
+                        .write(buf, &mut self.column_widths);
                 }
 
-                // Right-pad buffer.
-                {
-                    let buf_len = buf.chars().count();
-                    let max_span = self.max_name_span;
-                    let pad_len = TREE_COL_BUF + self.max_name_span.saturating_sub(buf_len);
-                    buf.extend(repeat(' ').take(pad_len));
-
-                    if buf_len > max_span {
-                        self.max_name_span = buf_len;
-                    }
-                };
-
-                TreeColumnData::from_fn(|column| value[column as usize].as_str())
-                    .write(buf, &mut self.column_widths);
 
                 println!("{buf}");
+                counter_lines += 1;
             }
+        }
+
+        if counter_lines > 0 {
+            buf.clear();
+            buf.push_str(&self.current_prefix);
+            if !is_last {
+                buf.push('│');
+            }
+
+            // TODO: Refactor this common code pasted from above
+            let max_span = self.max_name_span;
+            let buf_len = buf.chars().count();
+            let pad_len = TREE_COL_BUF + max_span.saturating_sub(buf_len);
+            buf.extend(repeat(' ').take(pad_len));
+
+            if buf_len > max_span {
+                self.max_name_span = buf_len;
+            }
+            // Write column spacers.
+            TreeColumnData([""; TreeColumn::COUNT]).write(buf, &mut self.column_widths);
+            println!("{buf}");
         }
     }
 
