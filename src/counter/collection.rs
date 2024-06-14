@@ -1,7 +1,8 @@
+use std::fmt::{Debug, Formatter};
 use crate::counter::{AnyCounter, IntoCounter, KnownCounterKind, MaxCountUInt};
 
 /// Multi-map from counters to their counts and input-based initializer.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(crate) struct CounterCollection {
     info: [KnownCounterInfo; KnownCounterKind::COUNT],
 }
@@ -14,6 +15,12 @@ struct KnownCounterInfo {
     /// `BencherConfig::with_inputs` can only be called once, so the input type
     /// cannot change.
     count_input: Option<Box</* unsafe */ dyn Fn(*const ()) -> MaxCountUInt + Sync>>,
+}
+
+impl Debug for KnownCounterInfo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&*format!("{:?}", self.counts).to_string())
+    }
 }
 
 impl CounterCollection {

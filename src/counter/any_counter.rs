@@ -72,7 +72,7 @@ impl AnyCounter {
 }
 
 /// Kind of `Counter` defined by this crate.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) enum KnownCounterKind {
     Bytes,
     Chars,

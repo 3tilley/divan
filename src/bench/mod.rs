@@ -1114,6 +1114,8 @@ impl<'a> BenchContext<'a> {
         let sample_size = self.samples.sample_size;
 
         let total_count = self.samples.iter_count();
+        // self.options.counters()
+        //println!("Counters: {:?}", self.counters);
 
         let total_duration = self.samples.total_duration();
         let mean_duration = FineDuration {
